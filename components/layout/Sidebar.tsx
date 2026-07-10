@@ -36,7 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Team', href: '/dashboard/team', icon: Users2, roles: ['manager', 'it_admin', 'server_admin'] },
   { label: 'Requests', href: '/dashboard/requests', icon: Inbox, roles: ['manager', 'it_admin', 'server_admin'] },
   { label: 'Assets', href: '/dashboard/assets', icon: Package, roles: ['it_admin', 'server_admin'] },
-  { label: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['it_admin', 'server_admin'] },
+  { label: 'Employees', href: '/dashboard/user', icon: Users, roles: ['it_admin', 'server_admin'] },
   { label: 'Reports', href: '/dashboard/reports', icon: FileBarChart, roles: ['it_admin', 'server_admin'] },
   { label: 'Assignments', href: '/dashboard/assignments', icon: ClipboardList, roles: ['server_admin'] },
   { label: 'Audit Logs', href: '/dashboard/audit-logs', icon: ScrollText, roles: ['server_admin'] },
