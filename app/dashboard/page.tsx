@@ -1,64 +1,67 @@
 'use client';
 
-import { Package, Users, ClipboardList, FileBarChart } from 'lucide-react';
-import { DashboardShell } from '@/components/layout/DashboardShell';
-import { StatsCard } from '@/components/dashboard/StatsCard';
-import { AssetStatsCard } from '@/components/dashboard/AssetStatsCard';
-import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { RecentAssets } from '@/components/dashboard/RecentAssets';
-import { QuickActions } from '@/components/dashboard/QuickActions';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/providers/AuthProvider';
+
 import Loader from '@/components/Loader';
+import { DashboardShell } from '@/components/layout/DashboardShell';
+
+import { EmployeeDashboard } from '@/components/dashboard/EmployeeDashboard';
+import { ManagerDashboard } from '@/components/dashboard/ManagerDashboard';
+import { ITAdminDashboard } from '@/components/dashboard/ITAdminDashboard';
+import { ServerAdminDashboard } from '@/components/dashboard/ServerAdminDashboard';
+
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const supabase = createClient();
   const { user, isLoading } = useAuth();
-  if (isLoading) return <Loader />;
-  if (!user) {
-  router.replace('/');
+
+  const [role, setRole] = useState<string | null>(null);
+  const [loadingRole, setLoadingRole] = useState(true);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!user) {
+      router.replace('/');
+      return;
+    }
+
+    async function loadRole() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !data) {
+        setRole('employee');
+      } else {
+        setRole(data.role);
+      }
+
+      setLoadingRole(false);
+    }
+
+    loadRole();
+  }, [user, isLoading, router, supabase]);
+
+  if (isLoading || loadingRole) {
+    return <Loader />;
   }
+
   return (
     <DashboardShell pageTitle="Dashboard">
-      {/* Top stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatsCard
-          label="Total assets"
-          value="442"
-          icon={Package}
-          delta={{ value: '+18', direction: 'up' }}
-        />
-        <StatsCard
-          label="Employees"
-          value="126"
-          icon={Users}
-          delta={{ value: '+4', direction: 'up' }}
-        />
-        <StatsCard
-          label="Active assignments"
-          value="312"
-          icon={ClipboardList}
-          delta={{ value: '+9', direction: 'up' }}
-        />
-        <StatsCard
-          label="Pending reports"
-          value="3"
-          icon={FileBarChart}
-          delta={{ value: '-2', direction: 'down' }}
-        />
-      </div>
+      {role === 'server_admin' && <ServerAdminDashboard />}
 
-      {/* Main grid */}
-      <div className="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2 flex flex-col gap-4">
-          <RecentAssets />
-          <QuickActions />
-        </div>
-        <div className="flex flex-col gap-4">
-          <AssetStatsCard />
-          <RecentActivity />
-        </div>
-      </div>
+      {role === 'it_admin' && <ITAdminDashboard />}
+
+      {role === 'manager' && <ManagerDashboard />}
+
+      {(role === 'employee' || !role) && <EmployeeDashboard />}
     </DashboardShell>
   );
 }

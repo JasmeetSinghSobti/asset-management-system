@@ -7,6 +7,7 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/providers/AuthProvider";
 import type { Profile, EditableProfileFields } from "@/lib/types/profile";
+import Loader from"@/components/Loader";
 
 export default function ProfilePage() {
   const supabase = createClient();
@@ -174,10 +175,7 @@ export default function ProfilePage() {
     <DashboardShell pageTitle="Profile">
       <div className="mx-auto max-w-2xl">
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-[#6B655A] dark:text-[#8FA79C]">
-            <Loader2 size={16} className="animate-spin" />
-            Loading your profile…
-          </div>
+          <Loader/>
         ) : loadError ? (
           <p className="text-sm text-[#A3402F] dark:text-[#E0836F]">
             {loadError}
