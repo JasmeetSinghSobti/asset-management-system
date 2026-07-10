@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -10,17 +11,37 @@ import {
   FileBarChart,
   ScrollText,
   Settings,
+  User as UserIcon,
+  Users2,
+  Inbox,
   X,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/providers/AuthProvider';
 
-export const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Assets', href: '/dashboard/assets', icon: Package },
-  { label: 'Employees', href: '/dashboard/employees', icon: Users },
-  { label: 'Assignments', href: '/dashboard/assignments', icon: ClipboardList },
-  { label: 'Reports', href: '/dashboard/reports', icon: FileBarChart },
-  { label: 'Audit Logs', href: '/dashboard/audit-logs', icon: ScrollText },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+type Role = 'employee' | 'manager' | 'it_admin' | 'server_admin';
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  roles: Role[];
+};
+
+const ALL_ROLES: Role[] = ['employee', 'manager', 'it_admin', 'server_admin'];
+
+export const NAV_ITEMS: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ALL_ROLES },
+  { label: 'My Assets', href: '/dashboard/my-assets', icon: Package, roles: ALL_ROLES },
+  { label: 'Team', href: '/dashboard/team', icon: Users2, roles: ['manager', 'it_admin', 'server_admin'] },
+  { label: 'Requests', href: '/dashboard/requests', icon: Inbox, roles: ['manager', 'it_admin', 'server_admin'] },
+  { label: 'Assets', href: '/dashboard/assets', icon: Package, roles: ['it_admin', 'server_admin'] },
+  { label: 'Employees', href: '/dashboard/employees', icon: Users, roles: ['it_admin', 'server_admin'] },
+  { label: 'Reports', href: '/dashboard/reports', icon: FileBarChart, roles: ['it_admin', 'server_admin'] },
+  { label: 'Assignments', href: '/dashboard/assignments', icon: ClipboardList, roles: ['server_admin'] },
+  { label: 'Audit Logs', href: '/dashboard/audit-logs', icon: ScrollText, roles: ['server_admin'] },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['server_admin'] },
+  { label: 'Profile', href: '/dashboard/profile', icon: UserIcon, roles: ALL_ROLES },
 ];
 
 type SidebarProps = {
@@ -30,6 +51,56 @@ type SidebarProps = {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const supabase = createClient();
+  const { user, isLoading } = useAuth();
+
+  const [role, setRole] = useState<string | null>(null);
+  const [loadingRole, setLoadingRole] = useState(true);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!user) {
+      setLoadingRole(false);
+      return;
+    }
+
+    async function loadRole() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      // Temporary — remove once this is working. This tells us exactly
+      // why the fetch is failing instead of silently falling back.
+      console.log('profile role fetch:', {
+        userId: user.id,
+        data,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        errorHint: error?.hint,
+      });
+
+      if (error || !data) {
+        setRole('employee');
+      } else {
+        setRole(data.role);
+      }
+
+      setLoadingRole(false);
+    }
+
+    loadRole();
+  }, [user, isLoading, supabase]);
+
+  // While role is still loading, only show Dashboard rather than
+  // briefly flashing admin-only links before the real role is known.
+  const visibleItems =
+    isLoading || loadingRole
+      ? NAV_ITEMS.filter((item) => item.href === '/dashboard')
+      : NAV_ITEMS.filter((item) => role && item.roles.includes(role as Role));
 
   return (
     <>
@@ -68,7 +139,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className="p-3 space-y-1">
-          {NAV_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const isActive =
               item.href === '/dashboard'
                 ? pathname === item.href
