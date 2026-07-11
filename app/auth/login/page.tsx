@@ -63,7 +63,12 @@ export default function LoginPage() {
   // Don't show the sign-in form while we're still checking for an
   // existing session, or once we know there is one and are about
   // to redirect away.
-  if (isLoading) return <Loader />;
+  if (isLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader />
+      </div>
+    );
 
   return (
     <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] bg-[#0F1613]">
@@ -140,13 +145,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="mt-2 text-[#6B655A] dark:text-[#8FA79C] text-sm">
-            New here?{' '}
-            <Link
-              href="/auth/register"
-              className="text-[#8A6B3B] dark:text-[#C9A46A] underline underline-offset-4 hover:text-[#6B5129] dark:hover:text-[#E0BA82]"
-            >
-              Create an account
-            </Link>
+            Sign in with the account your admin set up for you.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-9 space-y-5" noValidate>

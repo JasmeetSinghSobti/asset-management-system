@@ -49,10 +49,12 @@ export default function DashboardPage() {
     loadRole();
   }, [user, isLoading, router, supabase]);
 
-  if (isLoading || loadingRole) {
-    return <Loader />;
-  }
-
+  if (isLoading || loadingRole) 
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader />
+      </div>
+    );
   return (
     <DashboardShell pageTitle="Dashboard">
       {role === 'server_admin' && <ServerAdminDashboard />}
